@@ -1,0 +1,149 @@
+<!-- Usare un template basico de HTML -->
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Formulario de prueba</title>
+    <!-- Usare las librerias de bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" 
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" 
+      integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+  </head>
+  <body>
+  <!-- Generare un formulario basico -->
+
+  <div class="row mt-5">
+    <div class="col-sm-4 offset-4">
+
+      <div class="card">
+        <div class="card card-header">
+          Form Data
+        </div>
+        <div class="card card-body">
+          
+          <form id="formulario">
+
+            <div>
+
+              <div>Name</div>
+              <div class="input-group mb-3">
+                <span class="input-group-text">A</span>
+                <input type="text" name="name" id="name" class="form-control">
+              </div>
+              <div>Age</div>
+              <div class="input-group mb-3">            
+                <span class="input-group-text">A</span>
+                <input type="text" name="age" id="age" class="form-control">
+              </div>
+              <div>Email</div>
+              <div class="input-group mb-3">            
+                <span class="input-group-text">A</span>
+                <input type="text" name="email" id="email" class="form-control">
+              </div>
+              <div>Phone</div>
+              <div class="input-group mb-3">
+                <span class="input-group-text">A</span>
+                <input type="text" name="phone" id="phone" class="form-control">
+              </div>
+              <div>Files</div>
+              <div class="input-group mb-3">
+                <input id="browse" type="file" multiple class="form-control"/>
+              </div>
+              <div>
+                &nbsp;
+              </div>
+              <div class="text-center">
+                <input type="button" value="Send" class="btn btn-primary" onclick="enviar()">
+              </div>
+
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  </body>
+</html>
+
+<script>
+  async function enviar()
+  {
+    //Ahora recuperare los paramentros q se enviaran a la minimal API
+    //Ahora hagamos unos cambios para enviar y recibir archivos desde el formulario
+
+    const fs = document.querySelector("input[type='file']").files;
+    //Recuperaremos todos los archivos cargados y los convertiremos a Base 64 para enviarlos como strings
+
+    const fls = new Array();
+
+    for(let c = 0; c < fs.length; c++)
+    {
+      try
+      {
+        //Aqui crearemos una funcion para regresar el string en base 64
+        //Aqui la funcion utiliza procesas por lo q se deberia usar async y await
+        const b64 = await toBase64(fs[c]);
+        fls.push({
+          "name":fs[c].name,
+          "file": b64
+        });
+      }
+      catch(error)
+      {
+        console.log(error);
+      }
+    }
+
+    const data = {
+      "name": document.querySelector("input[name='name']").value,
+      "age": document.querySelector("input[name='age']").value,
+      "email": document.querySelector("input[name='email']").value,
+      "phone": document.querySelector("input[name='phone']").value,
+      //Agreguemos los archivos en base 64 a la peticion json
+      "filesb64":fls,
+      "status": false,
+    };
+    //console.log(data);
+    //Ahora armare la peticion fetch
+    const  url = "https://localhost:5000/save";
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify(data)
+    })
+    .then(function(response){
+      if (response.ok)
+      {
+        return response.text();
+      }
+      else
+      {
+        throw "Error en la peticion";
+      }
+    })
+    .then(function(texto){
+      console.log(texto);
+    })
+    .catch(function(err){
+      console.log(err);
+    });
+  }
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();  //  File reader es una funcion de javascript en el cual se tienen los datos del archivo en bytes
+    reader.readAsDataURL(file);   //Aqui se convierte en string
+    //para invocar la funcion
+    reader.onload =() => resolve(reader.result);
+    //en caso de error
+    reader.onerror = error => reject(error);
+  });
+</script>
